@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 Thrift.BinaryProtocol = function (trans, strictRead, strictWrite) {
     this.transport = this.trans = trans;
     this.strictRead = (strictRead !== undefined ? strictRead : false);
@@ -67,9 +66,9 @@ Thrift.BinaryParser = {
         // Convert to two's compliment using string manipulation because bitwise operator is limited to 32 bit numbers
         var smallestOne = bits.lastIndexOf('1');
         var left = bits.substring(0, smallestOne).
-            replace(/1/g, 'x').
-            replace(/0/g, '1').
-            replace(/x/g, '0');
+        replace(/1/g, 'x').
+        replace(/0/g, '1').
+        replace(/x/g, '0');
         bits = left + bits.substring(smallestOne);
         return bits;
     },
@@ -89,9 +88,18 @@ Thrift.BinaryParser = {
         for (i = 0; i < len; i++) {
             bytes[i] = utf8.charCodeAt(i);
         }
+
+        if (!bytes || !bytes.buffer) {
+            // DUMP DEBUG DATA
+            console.log("ERROR DETECTED IN THRIFT LIBRARY");
+            console.log({
+                input: s,
+                utf8: utf8,
+                bytes: bytes
+            });
+        }
         return bytes.buffer;
     },
-
 
     toByte: function (dataview) {
         return dataview.getUint8(0);
@@ -148,8 +156,7 @@ Thrift.BinaryParser = {
     }
 };
 
-
-(function(p) {
+(function (p) {
     var BinaryParser = Thrift.BinaryParser;
 
     p.flush = function () {
@@ -238,16 +245,16 @@ Thrift.BinaryParser = {
     };
 
     p.writeBinary = function (bytes) {
-      if(typeof bytes === "string") {
-        bytes = BinaryParser.fromString(bytes);
-      }
-      if (bytes.byteLength) {
-        this.writeI32(bytes.byteLength);
-      } else {
-        throw Error("Cannot read length of binary data");
-      }
-      this.trans.write(bytes);
-    }; 
+        if (typeof bytes === "string") {
+            bytes = BinaryParser.fromString(bytes);
+        }
+        if (bytes.byteLength) {
+            this.writeI32(bytes.byteLength);
+        } else {
+            throw Error("Cannot read length of binary data");
+        }
+        this.trans.write(bytes);
+    };
 
     p.writeI16 = function (i16) {
         this.trans.write(BinaryParser.fromShort(i16));
@@ -293,14 +300,14 @@ Thrift.BinaryParser = {
             type = this.readByte().value;
             seqid = this.readI32().value;
         }
-        return {fname: name, mtype: type, rseqid: seqid};
+        return { fname: name, mtype: type, rseqid: seqid };
     };
     
     p.readMessageEnd = function () {
     };
     
     p.readStructBegin = function () {
-        return {fname: ''}; // Where is this return value used? Can it be removed?
+        return { fname: '' }; // Where is this return value used? Can it be removed?
     };
     
     p.readStructEnd = function () {
@@ -309,10 +316,10 @@ Thrift.BinaryParser = {
     p.readFieldBegin = function () {
         var type = this.readByte().value;
         if (type == Type.STOP) {
-            return {fname: null, ftype: type, fid: 0};
+            return { fname: null, ftype: type, fid: 0 };
         }
         var id = this.readI16().value;
-        return {fname: null, ftype: type, fid: id};
+        return { fname: null, ftype: type, fid: id };
     };
     
     p.readFieldEnd = function () {
@@ -326,7 +333,7 @@ Thrift.BinaryParser = {
         var ktype = this.readByte().value;
         var vtype = this.readByte().value;
         var size = this.readI32().value;
-        return {ktype: ktype, vtype: vtype, size: size};
+        return { ktype: ktype, vtype: vtype, size: size };
     };
     
     p.readMapEnd = function () {
@@ -335,7 +342,7 @@ Thrift.BinaryParser = {
     p.readListBegin = function () {
         var etype = this.readByte().value;
         var size = this.readI32().value;
-        return {etype: etype, size: size};
+        return { etype: etype, size: size };
     };
     
     p.readListEnd = function () {
@@ -344,7 +351,7 @@ Thrift.BinaryParser = {
     p.readSetBegin = function () {
         var etype = this.readByte().value;
         var size = this.readI32().value;
-        return {etype: etype, size: size};
+        return { etype: etype, size: size };
     };
     
     p.readSetEnd = function () {
@@ -407,7 +414,7 @@ Thrift.BinaryParser = {
         return this.trans;
     };
     
-    p.skip = function(type) {
+    p.skip = function (type) {
         // console.log("skip: " + type);
         switch (type) {
             case Type.STOP:
@@ -473,8 +480,7 @@ Thrift.BinaryParser = {
     }
 })(Thrift.BinaryProtocol.prototype);
 
-
-Thrift.BinaryHttpTransport = function(url) {
+Thrift.BinaryHttpTransport = function (url) {
     this.url = url;
     this.buffer = [];
     this.received = null;
@@ -482,23 +488,23 @@ Thrift.BinaryHttpTransport = function(url) {
 };
 
 (function (p) {
-	p.open = function () {
-	};
+    p.open = function () {
+    };
 
-	p.close = function () {
-	};
+    p.close = function () {
+    };
 
-	p.read = function (len) {
+    p.read = function (len) {
         var view = new DataView(this.received, this.offset, len);
         this.offset += len;
         return view;
-	};
+    };
 
-	p.write = function (bytes) {
+    p.write = function (bytes) {
         this.buffer.push(bytes);
-	};
+    };
 
-	p.flush = function (async) {
+    p.flush = function (async) {
         if (!async) throw 'Error in BinaryHttpTransport.flush: Binary protocol does not support synchronous calls';
 
         var size = this.buffer.reduce(function (size, bytes) {
@@ -552,7 +558,7 @@ Thrift.BinaryHttpTransport = function(url) {
         };
 
         xhr.send(postData.buffer);
-	};
+    };
 
 })(Thrift.BinaryHttpTransport.prototype);
 
